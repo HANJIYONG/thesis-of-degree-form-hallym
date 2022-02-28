@@ -1,0 +1,671 @@
+%신경망, 활성화 함수, 어토인코더 그림
+\usepackage{amsmath} % for aligned
+%\usepackage{amssymb} % for \mathbb
+\usepackage{tikz}
+\usepackage{etoolbox} % for \ifthen
+\usepackage{listofitems} % for \readlist to create arrays
+\usetikzlibrary{arrows.meta} % for arrow size
+\usepackage[outline]{contour} % glow around text
+\contourlength{1.4pt}
+
+\tikzset{>=latex} % for LaTeX arrow head
+\usepackage{xcolor}
+\colorlet{myred}{red!80!black}
+\colorlet{skyblue}{cyan}
+\colorlet{myblue}{blue!80}
+%\colorlet{myblue}{blue!80!black}
+\colorlet{mygreen}{green!60!black}
+\colorlet{myorange}{orange!70!red!60!black}
+\colorlet{mydarkred}{red!30!black}
+\colorlet{mydarkblue}{blue!40!black}
+\colorlet{mydarkgreen}{green!30!black}
+\tikzstyle{node}=[very thick,circle,draw=myblue,minimum size=22,inner sep=0.5,outer sep=0.6]
+\tikzstyle{node in}=[node,green!15!black,draw=skyblue,fill=skyblue!25]
+\tikzstyle{node hidden}=[node,blue!15!black,draw=myblue,fill=myblue!20]
+\tikzstyle{node convol}=[node,orange!15!black,draw=myorange,fill=myorange!20]
+\tikzstyle{node out}=[node,red!15!black,draw=skyblue,fill=skyblue!20]
+\tikzstyle{connect}=[thick,mydarkblue] %,line cap=round
+\tikzstyle{connect arrow}=[-{Latex[length=4,width=3.5]},thick,mydarkblue,shorten <=0.5,shorten >=1]
+\tikzset{ % node styles, numbered for easy mapping with \nstyle
+  node 1/.style={node in},
+  node 2/.style={node hidden},
+  node 3/.style={node out},
+}
+\def\nstyle{int(\lay<\Nnodlen?min(2,\lay):3)} % map layer number onto 1, 2, or 3
+% 
+
+
+
+
+\newcommand{\titlesizebf}[1]{{\fontsize{22pt}{22pt} \textbf{#1}}}
+\newcommand{\sectionsizebf}[1]{{\fontsize{16pt}{16pt} \textbf{#1}}}
+\newcommand{\subsectionsizebf}[1]{{\fontsize{14pt}{14pt} \textbf{#1}}}
+\newcommand{\degreesizebf}[1]{{\fontsize{14pt}{14pt} \textbf{#1}}}
+\newcommand{\datesizebf}[1]{{\fontsize{12pt}{12pt} \textbf{#1}}}
+
+\def\KoreanTitle#1{\gdef\korean@title{#1}}
+\def\EnglishTitle#1{\gdef\english@title{#1}}
+% 심사위원
+\def\RefereeChief#1{\gdef\referee@chief{#1}}
+\def\RefereeSecond#1{\gdef\referee@second{#1}}
+\def\RefereeThird#1{\gdef\referee@third{#1}}
+\def\RefereeFourth#1{\gdef\referee@fourth{#1}}
+% \def\RefereeFifth#1{\gdef\referee@fifth{#1}}
+
+%% 겉,속 표지
+\newcommand{\makefrontcover}{%
+  \thispagestyle{empty} \noindent%  
+  \vskip 3.5cm %
+  \begin{center}
+    \degreesizebf{공학 석사 학위논문} \\ %
+    \vskip 2cm %
+    \titlesizebf{\korean@title} \\
+	\titlesizebf{\english@title} \\    
+	\vskip 8cm %
+	\subtitlesizebf{한 지 용 (Han, Ji Yong)} \\ % 
+	\vskip 0.5cm %
+	\degreesizebf{컴퓨터공학과(Department of Computer Engineering)} \\ %    
+    \degreesizebf{컴퓨터학전공(Major in Computer Engineering)} \\ %
+	\vskip 0.5cm %
+    \subtitlesizebf{한림대학교 대학원} \\ %
+    \subtitlesizebf{Graduate School, Hallym University} \\ %
+  \end{center}
+  \newpage %
+}
+% 빈 표지
+\newcommand\myemptypage{
+    \null
+    \thispagestyle{empty}
+    \addtocounter{page}{-1}
+    \newpage
+    }
+
+%  인증서
+\newcommand{\makeapproval}{%
+  \thispagestyle{empty} \noindent%
+	\begin{center}
+	\degreesizebf{임성훈, 노원종 교수지도} \\
+	\degreesizebf{공학 석사 학위논문}
+    \vskip 2cm %
+    \subtitlesizebf{한지용의 석사 학위논문을 합격으로 판정함} \\ %
+    \degreesizebf{2021년 12월} \\
+    \vskip 9cm %
+    \begin{flushright}
+      \begin{tabular}{r l l}                 % 심사위원명단
+    	\degreesizebf{심 \hfill 사 \hfill 위 \hfill 원 \hfill 장} & \degreesizebf{\refereesign{\referee@chief}} & (인) \\ \\[\refereevskip] %
+    	\degreesizebf{심 \hfill 사 \hfill 위 \hfill 원} & \degreesizebf{\refereesign{\referee@second}} & (인) \\ \\[\refereevskip] %
+    	\degreesizebf{심 \hfill 사 \hfill 위 \hfill 원} & \degreesizebf{\refereesign{\referee@third}}  & (인) \\ \\[\refereevskip] %
+    	\degreesizebf{심 \hfill 사 \hfill 위 \hfill 원} & \degreesizebf{\refereesign{\referee@fourth}} & (인) \\ \\[\refereevskip] %
+      \end{tabular}
+    \end{flushright}
+  \end{center}
+  \newpage
+}
+\newcommand{\makeabstractKor}{%
+  \thispagestyle{empty} \noindent%
+	\begin{center}
+	\degreesizebf{딥러닝 기반 신호 변조 시스템: 설계와 학습} \\
+    \vskip 2cm %
+    \end{center}
+    \subtitlesizebf{2021} \\
+    \subtitlesizebf{석사학위논문} \\ %
+    \subtitlesizebf{한지용} \\
+    \subtitlesizebf{컴퓨터공학과} \\
+    \subtitlesizebf{지도교수 : 임성훈, 노원종} \\
+    \\
+}
+\newcommand{\makeabstractEng}{%
+  \thispagestyle{empty} \noindent%
+	\begin{center}
+	\degreesizebf{Hybrid Neural Coded Modulation : Design and Traning Methods} \\
+    \vskip 2cm %
+    \end{center}
+    \subtitlesizebf{2021}\\
+    \subtitlesizebf{Master's Degree} \\ %
+    \subtitlesizebf{Han, Ji Yong} \\
+    \subtitlesizebf{Department of Computer Engineering} \\
+    \subtitlesizebf{Advisor Prof. Lim, Sung Hoon Noh, Won Jong} \\
+    \\
+}
+
+\newcommand{\DrawDNN}{
+     \begin{tikzpicture}[x=2.2cm,y=1.4cm]
+      \readlist\Nnod{4,5,5,5,3} % array of number of nodes per layer
+      \foreachitem \N \in \Nnod{ % loop over layers
+        \def\lay{\Ncnt} % alias of index of current layer
+        \pgfmathsetmacro\prev{int(\Ncnt-1)} % number of previous layer
+        \message{\lay,}
+        \foreach \i [evaluate={\y=\N/2-\i; \x=\lay; \n=\nstyle;}] in {1,...,\N}{ % loop over nodes
+          % NODES
+          \node[node \n] (N\lay-\i) at (\x,\y) {};
+          % CONNECTIONS
+          \ifnumcomp{\lay}{>}{1}{ % connect to previous layer
+            \foreach \j in {1,...,\Nnod[\prev]}{ % loop over nodes in previous layer
+              \draw[connect,white,line width=1.2] (N\prev-\j) -- (N\lay-\i);
+              \draw[connect] (N\prev-\j) -- (N\lay-\i);
+              %\draw[connect] (N\prev-\j.0) -- (N\lay-\i.180); % connect to left
+            }
+          }{} % else: nothing to connect first layer
+          
+        }
+      }
+      % LABELS
+      \node[above=1,align=center] at (N1-1.90) {input\\[-0.2em]layer\\(입력층)};
+      \node[above=1,align=center] at (N3-1.90) {hidden layer\\(은닉층)};
+      \node[above=1.6,align=center] at (N\Nnodlen-1.90) {output\\[-0.2em]layer\\(출력층)};
+      
+    \end{tikzpicture}
+    
+}
+
+\newcommand{\DrawActivation}{
+    
+\begin{tikzpicture}[x=2.7cm,y=1.6cm]
+  \def\NI{5} % number of nodes in input layers
+  \def\NO{4} % number of nodes in output layers
+  \def\yshift{0.4} % shift last node for dots
+  
+  % INPUT LAYER
+  \foreach \i [evaluate={\c=int(\i==\NI); \y=\NI/2-\i-\c*\yshift; \index=(\i<\NI?int(\i):"n");}]
+              in {1,...,\NI}{ % loop over nodes
+    \node[node in,outer sep=0.6] (NI-\i) at (0,\y) {$a_{\index}^{(0)}$};
+  }
+  
+  % OUTPUT LAYER
+  \foreach \i [evaluate={\c=int(\i==\NO); \y=\NO/2-\i-\c*\yshift; \index=(\i<\NO?int(\i):"m");}]
+    in {\NO,...,1}{ % loop over nodes
+    \ifnum\i=1 % high-lighted node
+      \node[node hidden]
+        (NO-\i) at (1,\y) {$a_{\index}^{(1)}$};
+      \foreach \j [evaluate={\index=(\j<\NI?int(\j):"n");}] in {1,...,\NI}{ % loop over nodes in previous layer
+        \draw[connect,white,line width=1.2] (NI-\j) -- (NO-\i);
+        \draw[connect] (NI-\j) -- (NO-\i)
+          node[pos=0.50] {\contour{white}{$w_{1}^{(\index)}$}};
+      }
+    \else % other light-colored nodes
+      \node[node,blue!20!black!80,draw=myblue!20,fill=myblue!5]
+        (NO-\i) at (1,\y) {$a_{\index}^{(1)}$};
+      \foreach \j in {1,...,\NI}{ % loop over nodes in previous layer
+        %\draw[connect,white,line width=1.2] (NI-\j) -- (NO-\i);
+        \draw[connect,myblue!20] (NI-\j) -- (NO-\i);
+      }
+    \fi
+  }
+  
+  % DOTS
+  \path (NI-\NI) --++ (0,1+\yshift) node[midway,scale=1.2] {$\vdots$};
+  \path (NO-\NO) --++ (0,1+\yshift) node[midway,scale=1.2] {$\vdots$};
+  
+  % EQUATIONS
+  %\def\agr#1{{\color{mydarkgreen}a_{#1}^{(0)}}}
+  %\node[below=17,right=11,mydarkblue,scale=0.95] at (NO-1)
+  %  {$\begin{aligned} %\underset{\text{bias}}{b_1}
+  %     &= \color{mydarkred}\sigma\left( \color{black}
+  %          w_{1,0}\agr{0} + w_{1}^{1}\agr{1} + \ldots + w_{1,n}\agr{n} + b_1^{(0)}
+  %        \color{mydarkred}\right)\\
+  %     &= \color{mydarkred}\sigma\left( \color{black}
+  %          \sum_{i=1}^{n} w_{1,i}\agr{i} + b_1^{(0)}
+  %         \color{mydarkred}\right)
+  %   \end{aligned}$};
+  
+  \node[right,scale=0.9] at (1.3,-1.3)
+    {$\begin{aligned}
+      {\color{mydarkblue}
+      \begin{pmatrix}
+        a_{1}^{(1)} \\[0.3em]
+        a_{2}^{(1)} \\
+        \vdots \\
+        a_{m}^{(1)}
+      \end{pmatrix}}
+      &=
+      \color{mydarkred}\sigma\left[ \color{black}
+      \begin{pmatrix}
+        w_{1}^{(0)} & w_{1}^{(1)} & \ldots & w_{1}^{(n)} \\
+        w_{2}^{(0)} & w_{2}^{(1)} & \ldots & w_{2}^{(n)} \\
+        \vdots  & \vdots  & \ddots & \vdots  \\
+        w_{m}^{(0)} & w_{m}^{(1)} & \ldots & w_{m}^{(n)}
+      \end{pmatrix}
+      {\color{mydarkgreen}
+      \begin{pmatrix}
+        a_{1}^{(0)} \\[0.3em]
+        a_{2}^{(0)} \\
+        \vdots \\
+        a_{n}^{(0)}
+      \end{pmatrix}}
+      +
+      \begin{pmatrix}
+        b_{1}^{(0)} \\[0.3em]
+        b_{2}^{(0)} \\
+        \vdots \\
+        b_{m}^{(0)}
+      \end{pmatrix}
+      \color{mydarkred}\right]\\[0.5em]
+      {\color{mydarkblue}a^{(1)}}
+      &= \color{mydarkred}\sigma\left( \color{black}
+           \mathbf{W}^{(0)} {\color{mydarkgreen}a^{(0)}}+\mathbf{b}^{(0)}
+         \color{mydarkred}\right)
+         %\color{black},\quad \mathbf{W}^{(0)} \in \mathbb{R}^{m\times n}
+    \end{aligned}$};
+  
+\end{tikzpicture}
+}
+
+\newcommand{\DrawAutoencoder}{
+    
+\begin{tikzpicture}[x=2.1cm,y=1.2cm]
+  \large
+  \readlist\Nnod{6,5,4,3,4,5,6} % array of number of nodes per layer
+  
+  % TRAPEZIA
+  \node[above,align=center,myorange!60!black] at (3,2.4) {encoder};
+  \node[above,align=center,myblue!60!black] at (5,2.4) {decoder};
+  \draw[myorange!40,fill=myorange,fill opacity=0.02,rounded corners=2]
+    (1.6,-2.7) --++ (0,5.4) --++ (2.8,-1.2) --++ (0,-3) -- cycle;
+  \draw[myblue!40,fill=myblue,fill opacity=0.02,rounded corners=2]
+    (6.4,-2.7) --++ (0,5.4) --++ (-2.8,-1.2) --++ (0,-3) -- cycle;
+  
+  \message{^^J  Layer}
+  \foreachitem \N \in \Nnod{ % loop over layers
+    \def\lay{\Ncnt} % alias of index of current layer
+    \pgfmathsetmacro\prev{int(\Ncnt-1)} % number of previous layer
+    \message{\lay,}
+    \foreach \i [evaluate={\y=\N/2-\i+0.5; \x=\lay; \n=\nstyle;}] in {1,...,\N}{ % loop over nodes
+      
+      % NODES
+      \node[node \n,outer sep=0.6] (N\lay-\i) at (\x,\y) {};
+      
+      % CONNECTIONS
+      \ifnumcomp{\lay}{>}{1}{ % connect to previous layer
+        \foreach \j in {1,...,\Nnod[\prev]}{ % loop over nodes in previous layer
+          \draw[connect,white,line width=1.2] (N\prev-\j) -- (N\lay-\i);
+          \draw[connect] (N\prev-\j) -- (N\lay-\i);
+          %\draw[connect] (N\prev-\j.0) -- (N\lay-\i.180); % connect to left
+        }
+      }{} % else: nothing to connect first layer
+      
+    }
+  }
+  
+  % LABELS
+  \node[above=1,align=center,mygreen!60!black] at (N1-1.90) {input \\layer\\(입력값)};
+  \node[above=1,align=center,myred!60!black] at (N\Nnodlen-1.90) {output\\layer\\(출력값)};
+  
+\end{tikzpicture}
+
+}
+
+% Tanner graph
+\newcommand{\DoTikzmark}[1]{%
+  \tikz[remember picture] \coordinate[shift={(0,.7ex)}](#1);%
+}
+\newcommand{\colrow}[3][]{%
+  \tikz[overlay,remember picture, line width=10pt]
+    \draw[shorten >=-.1em, shorten <=-.1em, #1] (#2)--(#3);
+}
+\tikzstyle{node in}=[node,green!15!black,draw=skyblue,fill=skyblue!25]
+\tikzstyle{node hidden}=[node,blue!15!black,draw=myblue,fill=myblue!20]
+\newcommand{\DrawTannergraph}{
+    \begin{tikzpicture}[thick,
+amat/.style={matrix of nodes,nodes in empty cells,
+  row sep=1em,draw,dashed,rounded corners,
+  nodes={draw,solid,execute at begin node={$\nu_{\the\pgfmatrixcurrentrow}$}}},
+  fsnode/.style={circle},
+  ssnode/.style={square}]
+
+ \matrix[amat,nodes=fsnode,label=above:Variable node] (mat1) {\\ \\ \\ \\ \\ \\ \\};
+
+ \matrix[amat,right=5cm of mat1,nodes=ssnode,label=above:factor node] (mat2) {\\
+ \\ 
+ \\};
+ \draw  (mat1-1-1) edge (mat2-1-1)
+(mat1-2-1) edge[red] (mat2-2-1)
+(mat1-3-1) edge (mat2-3-1)
+
+(mat1-4-1) edge (mat2-1-1)
+(mat1-4-1) edge (mat2-2-1)
+
+(mat1-5-1) edge (mat2-1-1)
+(mat1-5-1) edge (mat2-3-1)
+
+(mat1-6-1) edge[red] (mat2-2-1)
+(mat1-6-1) edge (mat2-3-1)
+
+(mat1-7-1) edge (mat2-1-1)
+(mat1-7-1) edge[red] (mat2-2-1)
+(mat1-7-1) edge (mat2-3-1);
+  
+\end{tikzpicture}
+    
+}
+
+\newcommand{\DrawInterleaving}{
+    
+    \begin{tikzpicture}[start chain, line width=1pt]
+    \node[on chain, align=left,label={[name=first_label,font=\footnotesize,align=center]below:Rate matching\\ output\\ with length E}] (first) {\textcolor{black}{01001100}\textcolor{red}{01010011}};
+    \node[on chain, align=left,label={[name=second_label,font=\footnotesize,align=center]above: $\longrightarrow$},
+    label = {[name =second_label_2,align=center]below:Row-column\\ interleaver \\ (writing) \\ $M(=2) \times E/M$\\ $M=2,4,6,8$}] (second)  {\textcolor{black}{01001100} \\ \textcolor{red}{01010011}};
+    \node[on chain, align=left,label={[name=third_label,font=\footnotesize,align=center]left: $\downarrow$},label={[name=third_label_2,font=\footnotesize,align=center]below:\\ Row-column\\ interleaver \\ (reading)}] (third)  {\textcolor{black}{01001100} \\ \textcolor{red}{01010011}};
+    
+    \node[on chain, align=left,label={[name=fourth_label,font=\footnotesize,align=center]below:Interleaver output}] (fourth)  {
+    \textcolor{black}{0}\textcolor{red}{0}\textcolor{black}{1}\textcolor{red}{1}\textcolor{black}{0}\textcolor{red}{0}\textcolor{black}{0}\textcolor{red}{1}\textcolor{black}{1}\textcolor{red}{0}\textcolor{black}{1}\textcolor{red}{0}\textcolor{black}{0}\textcolor{red}{1}\textcolor{black}{0}\textcolor{red}{1}};
+    
+    	\draw[->] (first.east) --+ (1mm,0) --node[above] {} (second.west);
+    	\draw[->] (second.east) --+ (5mm,0) --node[above] {} (third_label.west);
+    	\draw[->] (third.east) --+ (1mm,0) --node[above] {} (fourth.west);
+
+ 	\node[fit=(first)(first_label)(second_label)(second_label_2)(fourth), label={[font=\footnotesize]above: Interleaving in 5G standard}, draw, dashed] (enc1) {};
+\end{tikzpicture}
+}
+
+\newcommand{\DrawCommunicationSystem}{
+    
+    \begin{tikzpicture}[start chain, line width=1pt]
+
+    \node[on chain, draw, minimum height=10mm] (enc)  {Encoder};
+    \node[on chain, draw, minimum height=10mm ,label={[name=channel_label,font=\footnotesize,align=center]above:Channel}] (channel)  {$p_{y|x}$};
+    \node[on chain, draw, minimum height=10mm] (dec)  {Decoder};
+    
+    \draw[<-] (enc.west) --+ (-4mm,0) node[above, label={[name=first_arrow1]}] {$M^N$};
+ 	\draw[->] (enc.east) --+ (1mm,0) --node[above] {$X^N$} (channel.west);
+ 	\draw[->] (channel.east) --+ (1mm,0) -- node[above] {$Y^N$} (dec.west);
+ 	\draw[->] (dec.east) --+ (4mm,0) node[above, label={[name=last_arrow1]}] {$\hat{M}^N$};
+
+ 	\node[fit=(first_arrow1)(enc)(channel_label)(dec)(last_arrow1), label={[font=\footnotesize]above:Communication system}, draw, dashed] (enc1) {};
+\end{tikzpicture}
+
+}
+
+\newcommand{\DrawBicmArchitecture}{
+    \begin{tikzpicture}[start chain, line width=1pt]
+    \node[on chain, draw, minimum height=10mm,label={[name=encoder1_label,font=\footnotesize,align=center]above:Linear code\\[-\baselineskip+3mm]encoder}] (linear-enc)  {$G$};
+    \node[on chain, draw, minimum height=10mm] (interleaver)  {$\Pi$};
+    \node[on chain, draw, minimum height=10mm] (demux)  {Demux};
+    \node[on chain, draw, minimum height=10mm,label={[name=mapping1_label,font=\footnotesize,align=center]above:DNN-encoder\\[-\baselineskip+3mm](Modulator)}] (mod 1)  {$\mu_\theta$};
+    \draw[<-] (linear-enc.west) --+ (-4mm,0) node[above, label={[name=first_arrow1]}] {$b^k$};
+ 	\draw[->] (linear-enc.east) --+ (1mm,0) --node[above] {$c^n$} (interleaver.west);
+ 	\draw[->] (interleaver.east) --+ (1mm,0) -- node[above] {$c^n$} (demux.west);
+ 	\draw[->] (demux.east) --+ (1mm,0) -- node[above] {$c^{(j)}$} (mod 1.west);
+ 	\draw[->] (mod 1.east) --+ (4mm,0) node[above, label={[name=last_arrow1]}] {$x^{(j)}$};
+
+ 	\node[fit=(first_arrow1)(linear-enc)(encoder1_label)(mapping1_label)(mod 1), label={[font=\footnotesize]above:Encoder}, draw, dashed] (enc1) {};
+\end{tikzpicture}
+
+\begin{tikzpicture}[start chain, line width=1pt]
+    
+    \node[on chain, draw, minimum height=10mm,label={[name=demapping1_label,font=\footnotesize,align=center]above:DNN-decoder\\[-\baselineskip+3mm](Demodulator)}] (demod)  {$\phi_\theta$};
+    
+    \node[on chain, draw, minimum height=10mm,label={[name=encoder1_label]}] (mux)  {Mux};
+    
+    \node[on chain, draw, minimum height=10mm,label={[name=encoder1_label]}] (deinterleaver)  {$\Pi^{-1}$};
+
+    \node[on chain, draw, minimum height=10mm,label={[name=decoder1_label,font=\footnotesize,align=center]above:Linear code\\[-\baselineskip+3mm]decoder}] (linear-dec)  {$H$};
+	
+    \draw[<-] (demod.west) --+ (-4mm,0) node[above] {$y^{(j)}$};
+ 	\draw[->] (demod.east) --+ (1mm,0) -- node[above] {$\ell^{(j)}$} (mux.west);
+ 	\draw[->] (mux.east) --+ (1mm,0) -- node[above] {$\ell^n$} (deinterleaver.west);
+ 	\draw[->] (deinterleaver.east) --+ (1mm,0) -- node[above] {$\ell^n$} (linear-dec.west);
+ 	\draw[->] (linear-dec.east) --+ (4mm,0) node[above, label={[name=last_arrow]}] {$\hat c^n$};
+ 	\node[fit=(demapping1_label)(linear-dec)(decoder1_label)(demod)(last_arrow), label={[font=\footnotesize]above:Decoder}, draw, dashed] (dec1) {};
+\end{tikzpicture}
+}
+
+
+\newcommand{\DrawError}{
+    % This file was created by matlab2tikz.
+%
+%The latest updates can be retrieved from
+%  http://www.mathworks.com/matlabcentral/fileexchange/22022-matlab2tikz-matlab2tikz
+%where you can also make suggestions and rate matlab2tikz.
+%
+\begin{tikzpicture}
+\footnotesize
+\begin{axis}[%
+width=4in,
+height=4in,
+at={(-1.0in,0.0in)},
+scale only axis,
+xmin=2,
+xmax=11,
+% xmax=10.7,
+xlabel style={font=\color{white!15!black}},
+xlabel={$E_b/N_0$ [dB]},
+ymode=log,
+ymin=1e-07,
+ymax=1,
+yminorticks=true,
+ylabel style={font=\color{white!15!black}},
+ylabel={Bit/Block error rate},
+axis background/.style={fill=white},
+xmajorgrids,
+ymajorgrids,
+yminorgrids,
+legend style={nodes={scale=0.7, transform shape}, legend cell align=left, align=left, draw=white!12!black}
+]
+\addplot [color=black, line width=1.0pt, mark=o, mark options={solid, black}]
+  table[row sep=crcr]{%
+3.48970004336019	0.0169641435\\
+3.68970004336019	0.00789192319\\
+3.88970004336019	0.0032254073\\
+4.08970004336019	0.0011455401\\
+4.28970004336019	0.000355473496\\
+4.48970004336019	9.39109921e-05\\
+4.68970004336019	2.3221584e-05\\
+4.88970004336019	4.79356153e-06\\
+5.08970004336019	9.31818155e-07\\
+};
+\addlegendentry{M=16 QAM BER}
+
+\addplot [color=black, line width=1.0pt, mark=+, mark options={solid, black}]
+  table[row sep=crcr]{%
+3.48970004336019	0.15787\\
+3.68970004336019	0.07388501\\
+3.88970004336019	0.03013\\
+4.08970004336019	0.01067\\
+4.28970004336019	0.00348\\
+4.48970004336019	0.00086\\
+4.68970004336019	0.000238000229\\
+4.88970004336019	5.49999624e-05\\
+};
+\addlegendentry{M=16 QAM BLER}
+
+\addplot [color=blue, line width=1.0pt, mark=o, mark options={solid, blue}]
+  table[row sep=crcr]{%
+3.48970004336019	0.00782726333\\
+3.68970004336019	0.00285924226\\
+3.88970004336019	0.000891884416\\
+4.08970004336019	0.000222034063\\
+4.28970004336019	4.92462143e-05\\
+4.48970004336019	1.04356057e-05\\
+4.68970004336019	1.6666665e-06\\
+};
+\addlegendentry{M=16 DNN BER}
+
+\addplot [color=blue, line width=1.0pt, mark=+, mark options={solid, blue}]
+  table[row sep=crcr]{%
+3.48970004336019	0.0916099906\\
+3.68970004336019	0.0353349984\\
+3.88970004336019	0.011764998\\
+4.08970004336019	0.00332999945\\
+4.28970004336019	0.0008919999\\
+4.48970004336019	0.000258000009\\
+4.68970004336019	7.4000014e-05\\
+};
+\addlegendentry{M=16 DNN BLER}
+
+\addplot [color=black, line width=1.0pt, mark=o, mark options={solid, black}]
+  table[row sep=crcr]{%
+5.42878723144531	0.0998038575053215\\
+5.62878704071045	0.0807140097022057\\
+5.8287878036499	0.0605499185621738\\
+6.02878761291504	0.0421544425189495\\
+6.22878742218018	0.0261450950056314\\
+6.42878723144531	0.0148455146700144\\
+6.62878704071045	0.00774661777541041\\
+6.8287878036499	0.00352339027449489\\
+7.02878761291504	0.00147247139830142\\
+7.22878742218018	0.000560009328182787\\
+7.42878723144531	0.000186407240107656\\
+7.62878704071045	6.31959628663026e-05\\
+7.8287878036499	1.72651471075369e-05\\
+8.02878761291504	3.48958337781369e-06\\
+8.22878742218018	1.32670447783312e-06\\
+};
+\addlegendentry{M=64 QAM BER}
+
+\addplot [color=black, line width=1.0pt, mark=+, mark options={solid, black}]
+  table[row sep=crcr]{%
+6.42878723144531	0.136825010180473\\
+6.62878704071045	0.0718750059604645\\
+6.8287878036499	0.0330150052905083\\
+7.02878761291504	0.013799998909235\\
+7.22878742218018	0.00530500058084726\\
+7.42878723144531	0.0017630037618801\\
+7.62878704071045	0.000599498744122684\\
+7.8287878036499	0.000160499839694239\\
+};
+\addlegendentry{M=64 QAM BLER}
+
+\addplot [color=blue, line width=1.0pt, mark=o, mark options={solid, blue}]
+  table[row sep=crcr]{%
+5.22878742218018	0.0261261723935604\\
+5.42878723144531	0.0156879648566246\\
+5.62878704071045	0.00847771670669317\\
+5.8287878036499	0.00416517024859786\\
+6.02878761291504	0.00181583315134048\\
+6.22878742218018	0.000730321975424886\\
+6.42878723144531	0.000296136393444613\\
+6.62878704071045	0.000107471612864174\\
+6.8287878036499	3.70738634956069e-05\\
+7.02878761291504	1.60416639118921e-05\\
+7.22878742218018	5.78598474021419e-06\\
+7.42878723144531	2.11363612834248e-06\\
+7.62878704071045	9.88636315923941e-07\\
+};
+\addlegendentry{M=64 DNN BER}
+
+\addplot [color=blue, line width=1.0pt, mark=+, mark options={solid, blue}]
+  table[row sep=crcr]{%
+5.8287878036499	0.112609997391701\\
+6.02878761291504	0.0568100027740002\\
+6.22878742218018	0.0268449988216162\\
+6.42878723144531	0.0122549999505281\\
+6.62878704071045	0.00512999948114157\\
+6.8287878036499	0.00229999981820583\\
+7.02878761291504	0.00106999999843538\\
+7.22878742218018	0.000409999949624762\\
+7.42878723144531	0.000196999913896434\\
+7.62878704071045	9.79999822448008e-05\\
+};
+\addlegendentry{M=64 DNN BLER}
+
+\end{axis}
+
+% \begin{axis}[%
+% width=5.174in,
+% height=4.681in,
+% at={(0in,0in)},
+% scale only axis,
+% xmin=0,
+% xmax=1,
+% ymin=0,
+% ymax=1,
+% axis line style={draw=none},
+% ticks=none,
+% axis x line*=bottom,
+% axis y line*=left
+% ]
+% \end{axis}
+\end{tikzpicture}%
+}
+
+
+\newcommand{\DrawErrorLoss}{
+    \begin{tikzpicture}
+\footnotesize
+\begin{axis}[%
+width=4in,
+height=4in,
+at={(0.0in,0.0in)},
+scale only axis,
+xmin=4.5,
+xmax=8.5,
+xlabel style={font=\color{white!15!black}},
+xlabel={$E_b/N_0$ [dB]},
+ymode=log,
+ymin=1e-07,
+ymax=1,
+yminorticks=true,
+ylabel style={font=\color{white!15!black}},
+ylabel={Bit error rate},
+axis background/.style={fill=white},
+xmajorgrids,
+ymajorgrids,
+yminorgrids,
+legend style={nodes={scale=0.7, transform shape}, legend cell align=left, align=left, draw=white!12!black}
+]
+\addplot [color=red, line width=1.0pt, mark=o, mark options={solid, red}]
+  table[row sep=crcr]{%
+5.22878742218018	0.0261261723935604\\
+5.42878723144531	0.0156879648566246\\
+5.62878704071045	0.00847771670669317\\
+5.8287878036499	0.00416517024859786\\
+6.02878761291504	0.00181583315134048\\
+6.22878742218018	0.000730321975424886\\
+6.42878723144531	0.000296136393444613\\
+6.62878704071045	0.000107471612864174\\
+6.8287878036499	3.70738634956069e-05\\
+7.02878761291504	1.60416639118921e-05\\
+7.22878742218018	5.78598474021419e-06\\
+7.42878723144531	2.11363612834248e-06\\
+7.62878704071045	9.88636315923941e-07\\
+};
+\addlegendentry{GMI DNN}
+
+\addplot [color=blue, line width=1.0pt, mark=triangle, mark options={solid, rotate=180, blue}]
+  table[row sep=crcr]{%
+5.22878745280338	0.0740861773\\
+5.42878745280338	0.0524442554\\
+5.62878745280337	0.0343669236\\
+5.82878745280337	0.0203812033\\
+6.02878745280337	0.0111144312\\
+6.22878745280337	0.00550342873\\
+6.42878745280337	0.00251505654\\
+6.62878745280337	0.00102365538\\
+6.82878745280337	0.000422073854\\
+7.02878745280337	0.000147168571\\
+7.22878745280337	4.98768874e-05\\
+7.42878745280337	1.81572011e-05\\
+7.62878745280337	7.24621117e-06\\
+7.82878745280337	2.2462121e-06\\
+8.02878745280337	8.27651384e-07\\
+%8.22878745280337	4.71590865e-07\\
+};
+\addlegendentry{BCE DNN}
+
+\addplot [color=black, line width=1.0pt, mark=x, mark options={solid, black}]
+  table[row sep=crcr]{%
+5.42878723144531	0.0998038575053215\\
+5.62878704071045	0.0807140097022057\\
+5.8287878036499	0.0605499185621738\\
+6.02878761291504	0.0421544425189495\\
+6.22878742218018	0.0261450950056314\\
+6.42878723144531	0.0148455146700144\\
+6.62878704071045	0.00774661777541041\\
+6.8287878036499	0.00352339027449489\\
+7.02878761291504	0.00147247139830142\\
+7.22878742218018	0.000560009328182787\\
+7.42878723144531	0.000186407240107656\\
+7.62878704071045	6.31959628663026e-05\\
+7.8287878036499	1.72651471075369e-05\\
+8.02878761291504	3.48958337781369e-06\\
+8.22878742218018	1.32670447783312e-06\\
+};
+\addlegendentry{QAM}
+
+\end{axis}
+
+\end{tikzpicture}% 
+    
+}
+
+\newcommand{}{}
